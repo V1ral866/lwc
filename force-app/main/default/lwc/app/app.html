@@ -1,0 +1,16 @@
+<template>
+	<div class="slds-p-bottom_large slds-p-left_large" style="width:500px">
+		<lightning-record-edit-form object-api-name="Animal">
+            <lightning-input type="number" name="externalIdFfom" label="External Id Ffom" data-id="externalIdFfom"></lightning-input>
+            <lightning-input type="number" name="externalIdTo" label="External Id To" data-id="externalIdTo"></lightning-input>
+			<lightning-button type="submit" name="submit" label="Find Animals!" onclick={handleClick}>
+			</lightning-button>
+		</lightning-record-edit-form>
+		<div class="slds-box">  
+			<lightning-datatable  
+				data={animals} columns={cols} key-field="Id">  
+			</lightning-datatable>  
+		</div>  
+		<lightning-button slot="actions" label="Save" onclick={saveAnimals}></lightning-button>  
+	</div>
+</template>
