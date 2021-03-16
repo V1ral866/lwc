@@ -1,6 +1,7 @@
 import { LightningElement, wire, api } from 'lwc';
 import findExternalAnimals from '@salesforce/apex/LWCController.findExternalAnimals';
 import saveAnimals from '@salesforce/apex/LWCController.saveAnimals';
+import getAnimals from '@salesforce/apex/LWCController.getAnimals';
 
 const COLS=[  
     {label:'Id', fieldName:'id', type:'text'},  
@@ -12,8 +13,13 @@ const COLS=[
 
 export default class App extends LightningElement {
         
+    @api externalAnimals;
     @api animals;
     cols=COLS;
+
+    connectedCallback() {
+        this.getAnimals();
+    }
 
     handleClick(event) {
         var idFrom = this.template.querySelector('[data-id="externalIdFfom"]');
@@ -23,7 +29,7 @@ export default class App extends LightningElement {
 
         findExternalAnimals({ idFrom: idFrom.value, idTo: idTo.value })
             .then((result) => {
-                this.animals = result;
+                this.externalAnimals = result;
             });
     }
 
@@ -31,7 +37,20 @@ export default class App extends LightningElement {
         var selectedAnimals = this.template.querySelector("lightning-datatable").getSelectedRows();  
         saveAnimals({animals: selectedAnimals})
             .then(result => {  
+                console.log('Result: ' + result.isSuccess);
+                console.log('Result: ' + result.result);
+                if (result.isSuccess) {
+                    this.getAnimals();
+                }
             }).catch(error => {  
+                
             })  
-   }  
+   }
+   
+   getAnimals() {
+        getAnimals()
+            .then((result) => {
+              this.animals = result;
+        });
+   }
 }

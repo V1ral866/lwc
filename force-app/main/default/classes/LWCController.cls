@@ -11,12 +11,55 @@ public with sharing class LWCController {
     }
 
     @AuraEnabled
-    public static List<AnimalWrapper> saveAnimals(List<AnimalWrapper> animals){
-        System.debug(animals);
-        List<Animal__c> animalsToInsert = unwrapAnimals(animals);
-        insert animalsToInsert;
-        System.debug(animalsToInsert);
-        return wrapAnimals(animalsToInsert);
+    public static List<AnimalWrapper> getAnimals() {
+        List<AnimalWrapper> wrappers = new List<AnimalWrapper>();
+
+        try {
+            wrappers = wrapAnimals([SELECT Id, Name, Says__c, Eats__c, ExternalId__c FROM Animal__c ORDER BY CreatedDate DESC LIMIT 10]);
+            System.debug('Wrappers: ' + wrappers);
+        } catch (Exception e) {
+            System.debug('Wrappers: ' + e.getMessage());
+        }
+        return wrappers;
+    }
+
+    @AuraEnabled
+    public static Response saveAnimals(List<AnimalWrapper> animals){
+        try {
+            System.debug(animals);
+            List<Animal__c> animalsToInsert = unwrapAnimals(animals);
+            insert animalsToInsert;
+            System.debug(animalsToInsert);
+            sendEmail(animalsToInsert);
+            return new Response(true, wrapAnimals(animalsToInsert));
+        } catch (Exception e) {
+            return new Response(false, e.getMessage());
+        }
+    }
+
+    private static void sendEmail(List<Animal__c> animals) {
+        EmailTemplate emailTemplate = [SELECT Id, Subject, Description, HtmlValue, DeveloperName, Body FROM EmailTemplate WHERE Name = 'External Animal HTML'];
+        Messaging.SingleEmailMessage[] messages = new List<Messaging.SingleEmailMessage> ();
+
+        Messaging.SingleEmailMessage message = new Messaging.SingleEmailMessage();
+        message.setTargetObjectId(UserInfo.getUserId()); 
+        message.setSenderDisplayName('Animal INC'); 
+        message.setReplyTo('no-reply@company.com');
+        message.setUseSignature(false); 
+        message.setBccSender(false); 
+        message.setSaveAsActivity(false); 
+        message.setTemplateID(emailTemplate.Id); 
+        String htmlBody = '<html><body><h1>External animals</h1>';
+        for (Animal__c animal : animals) {
+            htmlBody += '<div><a href="' + URL.getOrgDomainUrl().toExternalForm() + '/' + animal.Id + '">' + animal.Name + '</a></div>';
+        }
+        htmlBody += '</body></html>';
+        message.setHtmlBody(htmlBody);
+        message.toAddresses = new String[] {UserInfo.getUserEmail()};
+        messages.add(message);
+        
+        Messaging.SendEmailResult[] results = Messaging.sendEmail(messages);
+        System.debug('Email sended ' + results[0].isSuccess());
     }
 
     private static List<Animal__c> unwrapAnimals(List<AnimalWrapper> wrapers) {
@@ -71,6 +114,18 @@ public with sharing class LWCController {
         public String extrenalId {get;set;}
 
         public AnimalWrapper() {}    
+    }
+
+    public class Response {
+        @AuraEnabled
+        public Boolean isSuccess {get;set;}
+        @AuraEnabled
+        public Object result {get;set;}
+
+        public Response(Boolean success, Object result) {
+            this.isSuccess = success;   
+            this.result = result;
+        }
     }
 
 }

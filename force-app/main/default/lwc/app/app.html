@@ -1,16 +1,27 @@
 <template>
 	<div class="slds-p-bottom_large slds-p-left_large" style="width:500px">
-		<lightning-record-edit-form object-api-name="Animal">
+		<form id="externalForm">
             <lightning-input type="number" name="externalIdFfom" label="External Id Ffom" data-id="externalIdFfom"></lightning-input>
             <lightning-input type="number" name="externalIdTo" label="External Id To" data-id="externalIdTo"></lightning-input>
 			<lightning-button type="submit" name="submit" label="Find Animals!" onclick={handleClick}>
 			</lightning-button>
-		</lightning-record-edit-form>
+		</form>
 		<div class="slds-box">  
 			<lightning-datatable  
-				data={animals} columns={cols} key-field="Id">  
+				data={externalAnimals} columns={cols} key-field="Id">  
 			</lightning-datatable>  
 		</div>  
 		<lightning-button slot="actions" label="Save" onclick={saveAnimals}></lightning-button>  
+		<lightning-card title="Animals" icon-name="custom:custom14">
+			<ul class="slds-m-around_medium">
+				<template iterator:it={animals}>
+					<li key={it.value.name}>
+						<div if:true={it.first} class="list-first"></div>
+							{it.value.name}, {it.value.says}
+                    	<div if:true={it.last} class="list-last"></div>
+					</li>
+				</template>
+			</ul>
+		</lightning-card>
 	</div>
 </template>
